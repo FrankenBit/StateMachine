@@ -26,7 +26,6 @@ namespace FrankenBit.Utilities
             private readonly List<ITransition> _transitions = new List<ITransition>();
 
             /// <inheritdoc />
-            [NotNull]
             public override string ToString() =>
                 $"[{_transitions.Count}]";
 

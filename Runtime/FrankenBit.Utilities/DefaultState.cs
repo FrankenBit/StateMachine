@@ -61,7 +61,6 @@ namespace FrankenBit.Utilities
         }
 
         /// <inheritdoc />
-        [NotNull]
         public override string ToString() =>
             _name;
 

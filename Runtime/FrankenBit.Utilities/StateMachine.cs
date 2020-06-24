@@ -113,7 +113,6 @@ namespace FrankenBit.Utilities
             TransitionTo( DefaultState.Exit );
 
         /// <inheritdoc />
-        [NotNull]
         public override string ToString() =>
             $"[{_currentState}]";
 
