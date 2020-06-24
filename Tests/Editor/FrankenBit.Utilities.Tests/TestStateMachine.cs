@@ -37,10 +37,7 @@ namespace FrankenBit.Utilities.Tests
             Assert.IsFalse( state2.Completed );
             Assert.AreEqual( 0, state3.Entered, double.Epsilon );
 
-            for ( var i = 0; i < 2; i++ )
-            {
-                machine.Update( 1 );
-            }
+            machine.Update( 1 );
 
             Assert.AreEqual( 1, state1.Entered, double.Epsilon );
             Assert.IsTrue( state2.Completed );

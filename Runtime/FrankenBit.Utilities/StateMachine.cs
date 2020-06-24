@@ -124,7 +124,20 @@ namespace FrankenBit.Utilities
         /// </param>
         public void Update( float deltaTime )
         {
-            if ( !TransitionFrom( deltaTime ) ) _currentState.Update( deltaTime );
+            _currentState.Update( deltaTime );
+            _usedStates.Push( _currentState );
+
+            IState targetState = GetTargetState();
+
+            while ( !_usedStates.Contains( targetState ) && TransitionTo( targetState ) )
+            {
+                targetState.Update( deltaTime );
+
+                _usedStates.Push( targetState );
+                targetState = GetTargetState();
+            }
+
+            _usedStates.Clear();
         }
 
         /// <summary>
@@ -192,41 +205,6 @@ namespace FrankenBit.Utilities
             transitions = new Transitions();
             _transitions[ state ] = transitions;
             return transitions;
-        }
-
-        /// <summary>
-        ///     Transition from current state to the next one that is
-        ///     not immediately completed.
-        /// </summary>
-        /// <param name="deltaTime">
-        ///     Time in seconds that has passed since the previous update call.
-        /// </param>
-        /// <returns>
-        ///     <see langword="true" /> if the current state was already updated,
-        ///     <see langword="false" /> otherwise.
-        /// </returns>
-        /// <remarks>
-        ///     The transition may also terminate at a completed state when it is the
-        ///     start of a loop of completed states.
-        /// </remarks>
-        private bool TransitionFrom( float deltaTime )
-        {
-            _usedStates.Push( _currentState );
-
-            IState targetState = GetTargetState();
-            bool updated = false;
-
-            while ( !_usedStates.Contains( targetState ) && TransitionTo( targetState ) )
-            {
-                targetState.Update( deltaTime );
-                updated = true;
-
-                _usedStates.Push( targetState );
-                targetState = GetTargetState();
-            }
-
-            _usedStates.Clear();
-            return updated;
         }
 
         /// <summary>
