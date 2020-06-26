@@ -21,7 +21,7 @@ namespace FrankenBit.Utilities
             /// <summary>
             ///     Create a transition between the <paramref name="sourceState" /> and the <paramref name="targetState" />.
             /// </summary>
-            /// <typeparam name="TState">
+            /// <typeparam name="TSourceState, TTargetState">
             ///     Type of the source state.
             /// </typeparam>
             /// <param name="sourceState">
@@ -35,9 +35,11 @@ namespace FrankenBit.Utilities
             ///     to the <paramref name="targetState" />.
             /// </returns>
             [NotNull]
-            internal static Transition<TState> Between<TState>( [NotNull] TState sourceState, [NotNull] IState targetState )
-                where TState : class, IState =>
-                new Transition<TState>( sourceState, targetState );
+            internal static Transition<TSourceState, TTargetState> Between<TSourceState, TTargetState>(
+                [NotNull] TSourceState sourceState, [NotNull] TTargetState targetState )
+                where TSourceState : class, IState
+                where TTargetState : class, IState =>
+                new Transition<TSourceState, TTargetState>( sourceState, targetState );
         }
     }
 }
