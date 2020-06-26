@@ -6,7 +6,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 using JetBrains.Annotations;
 
@@ -63,6 +62,11 @@ namespace FrankenBit.Utilities
         }
 
         /// <summary>
+        ///     Occurs when the state machine is transitioning from one state to a different one.
+        /// </summary>
+        public event Action<IState, IState> Transitioning;
+
+        /// <summary>
         ///     Interface for a state transition.
         /// </summary>
         private interface ITransition
@@ -115,7 +119,7 @@ namespace FrankenBit.Utilities
 
         /// <inheritdoc />
         public override string ToString() =>
-            $"[{_currentState}]";
+            $"[{_currentState}] ({_currentTransitions})";
 
         /// <summary>
         ///     Update state machine for current frame.
@@ -148,6 +152,9 @@ namespace FrankenBit.Utilities
         /// </summary>
         /// <typeparam name="TSourceState">
         ///     Type of the source state the transition originates from.
+        /// </typeparam>
+        /// <typeparam name="TTargetState">
+        ///     Type of the target state the transition points to.
         /// </typeparam>
         /// <param name="sourceState">
         ///     State that has to be current for the transition to be considered.
@@ -230,6 +237,9 @@ namespace FrankenBit.Utilities
             if ( targetState == _currentState ) return false;
 
             _currentState.Exit();
+
+            Transitioning?.Invoke( _currentState, targetState );
+
             _currentState = targetState;
             _currentState.Enter();
 

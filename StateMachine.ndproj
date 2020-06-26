@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <NDepend AppName="StateMachine" Platform="DotNet" FileWrittenByProductVersion="2020.1.0.9404">
   <OutputDir KeepXmlFiles="False">.\NDependOut</OutputDir>
   <IDEFiles />
@@ -19,9 +19,11 @@
   <MergeCodeGeneratedByCompiler>True</MergeCodeGeneratedByCompiler>
   <ZipSourceFiles>True</ZipSourceFiles>
   <Report Kind="0" SectionsEnabled="110591" XslPath="" Flags="261120" />
-  <BuildComparisonSetting ProjectMode="CurrentProject" BuildMode="NDaysAgoAnalysisResult" ProjectFileToCompareWith="" BuildFileToCompareWith="" NDaysAgo="30" />
-  <BaselineInUISetting ProjectMode="CurrentProject" BuildMode="NDaysAgoAnalysisResult" ProjectFileToCompareWith="" BuildFileToCompareWith="" NDaysAgo="30" />
-  <CoverageFiles CoverageDir="" UncoverableAttribute="" />
+  <BuildComparisonSetting ProjectMode="CurrentProject" BuildMode="MostRecentAnalysisResultAvailable" ProjectFileToCompareWith=".\StateMachine.ndproj" BuildFileToCompareWith=".\NDependOut\NDependAnalysisResult_StateMachine_2020Jun26_19h19.ndar" NDaysAgo="30" />
+  <BaselineInUISetting ProjectMode="CurrentProject" BuildMode="MostRecentAnalysisResultAvailable" ProjectFileToCompareWith=".\StateMachine.ndproj" BuildFileToCompareWith=".\NDependOut\NDependAnalysisResult_StateMachine_2020Jun26_19h19.ndar" NDaysAgo="30" />
+  <CoverageFiles CoverageDir="..\..\CodeCoverage\Memory-opencov\EditMode" UncoverableAttribute="">
+    <CoverageFile>..\..\CodeCoverage\Memory-opencov\Recording\RecordingCoverageResults_0000.xml</CoverageFile>
+  </CoverageFiles>
   <TrendMetrics UseCustomLog="False" LogRecurrence="3" LogLabel="2" UseCustomDir="False" CustomDir="">
     <Chart Name="Size" ShowInReport="True">
       <Serie MetricName="# Lines of Code" MetricUnit="Loc" Color="#FF00BFFF" ChartType="Line" ScaleExp="0" />
@@ -82,8 +84,7 @@
       <High2Critical_SeverityThreshold>72000000000</High2Critical_SeverityThreshold>
       <Critical2Blocker_SeverityThreshold>360000000000</Critical2Blocker_SeverityThreshold>
     </DebtSettings>
-  </ProjectDebtSettings>
-  <Queries>
+  </ProjectDebtSettings><Queries>
     <Group Name="Quality Gates" Active="True" ShownInReport="False">
       <Query Active="True" DisplayList="True" DisplayStat="True" DisplaySelectionView="False" IsCriticalRule="False"><![CDATA[// <Name>Quality Gates Evolution</Name>
 from qg in QualityGates
@@ -11923,7 +11924,7 @@ select new {
 // used at *baseline* time, and that are not used anymore.
 //</Description>]]></Query>
     </Group>
-    <Group Name="Statistics" Active="False" ShownInReport="False">
+    <Group Name="Statistics" Active="True" ShownInReport="False">
       <Query Active="True" DisplayList="False" DisplayStat="False" DisplaySelectionView="False" IsCriticalRule="False"><![CDATA[// <Name>Most used types (Rank)</Name>
 (from t in Application.Types 
  where !t.IsGeneratedByCompiler
@@ -12520,5 +12521,4 @@ select new {
 //</HowToFix>]]></Query>
       </Group>
     </Group>
-  </Queries>
-</NDepend>
+  </Queries></NDepend>

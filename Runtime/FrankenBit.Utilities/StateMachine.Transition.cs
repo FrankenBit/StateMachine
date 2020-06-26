@@ -21,8 +21,11 @@ namespace FrankenBit.Utilities
             /// <summary>
             ///     Create a transition between the <paramref name="sourceState" /> and the <paramref name="targetState" />.
             /// </summary>
-            /// <typeparam name="TSourceState, TTargetState">
+            /// <typeparam name="TSourceState">
             ///     Type of the source state.
+            /// </typeparam>
+            /// <typeparam name="TTargetState">
+            ///     Type of the target state.
             /// </typeparam>
             /// <param name="sourceState">
             ///     The source state to create the transition from.
@@ -31,12 +34,13 @@ namespace FrankenBit.Utilities
             ///     The target state to create the transition to.
             /// </param>
             /// <returns>
-            ///     A new <see cref="Transition{TState}" /> from the <paramref name="sourceState" />
+            ///     A new <see cref="Transition{TSourceState,TTargetState}" /> from the <paramref name="sourceState" />
             ///     to the <paramref name="targetState" />.
             /// </returns>
             [NotNull]
             internal static Transition<TSourceState, TTargetState> Between<TSourceState, TTargetState>(
-                [NotNull] TSourceState sourceState, [NotNull] TTargetState targetState )
+                [NotNull] TSourceState sourceState,
+                [NotNull] TTargetState targetState )
                 where TSourceState : class, IState
                 where TTargetState : class, IState =>
                 new Transition<TSourceState, TTargetState>( sourceState, targetState );

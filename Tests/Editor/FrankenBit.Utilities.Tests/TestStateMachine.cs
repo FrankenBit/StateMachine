@@ -6,6 +6,8 @@
 
 using NUnit.Framework;
 
+using Debug = UnityEngine.Debug;
+
 namespace FrankenBit.Utilities.Tests
 {
     /// <summary>
@@ -13,6 +15,49 @@ namespace FrankenBit.Utilities.Tests
     /// </summary>
     public sealed class TestStateMachine
     {
+        /// <summary>
+        ///     Test if the action state works as expected.
+        /// </summary>
+        [Test]
+        public void TestActionState()
+        {
+            var machine = new StateMachine();
+
+            var entered = false;
+            var exited = false;
+            var updated = 0;
+
+            var state = new ActionState
+            {
+                Enter = () =>
+                {
+                    entered = true;
+                    exited = false;
+                },
+                Completed = () => updated == 2,
+                Exit = () => exited = true,
+                Update = d => updated += 1
+            };
+
+            machine.AddTransition( DefaultState.Enter, state );
+
+            machine.Update( 0 );
+
+            Assert.IsTrue( entered );
+            Assert.IsFalse( exited );
+            Assert.AreEqual( 1, updated, double.Epsilon );
+
+            machine.Update( 0 );
+
+            Assert.IsTrue( entered );
+            Assert.IsTrue( exited );
+            Assert.AreEqual( 2, updated, double.Epsilon );
+
+            machine.Update( 0 );
+            Assert.IsTrue( entered );
+            Assert.IsFalse( exited );
+        }
+
         /// <summary>
         ///     Ensure that the delay state actually delays state machine execution.
         /// </summary>
@@ -23,6 +68,8 @@ namespace FrankenBit.Utilities.Tests
             var state1 = new CounterState();
             var state2 = new DelayState( 3 );
             var state3 = new CounterState();
+
+            machine.Transitioning += DebugTransitions;
 
             machine.AddTransition( DefaultState.Enter, state1 );
             machine.AddTransition( state1, state2 );
@@ -60,8 +107,8 @@ namespace FrankenBit.Utilities.Tests
 
             machine.AddTransition( DefaultState.Enter, state1 );
 
-            machine.AddTransition( state1, state2 )
-               .ButWhen( s => s.Exited, state3 );
+            machine.AddTransition( state1, state3 ).When( s => s.Exited );
+            machine.AddTransition( state1, state2 );
 
             machine.Update( 0 );
 
@@ -240,7 +287,42 @@ namespace FrankenBit.Utilities.Tests
             machine.Update( 0 );
 
             string text = machine.ToString();
-            Assert.AreEqual( "[Test]", text );
+            Assert.AreEqual( "[Test] (1)", text );
+        }
+
+        /// <summary>
+        ///     Ensure that a transition action is executed during a transition.
+        /// </summary>
+        [Test]
+        public void TestTransitionAction()
+        {
+            var machine = new StateMachine();
+
+            int a = 0, b = 0;
+
+            var state1 = new CounterState();
+            var state2 = new DefaultState( "S2" );
+            var state3 = new DefaultState( "S3" );
+
+            machine.AddTransition( DefaultState.Enter, state1 );
+
+            machine.AddTransition( state1, state2 )
+               .When( s => s.Entered == 1 )
+               .OnTransition( ( s, t ) => a = s.Updated );
+
+            machine.AddTransition( state1, state3 )
+               .When( s => s.Entered == 2 )
+               .OnTransition( ( s, t ) => b = s.Updated );
+
+            machine.Update( 0 );
+
+            Assert.AreEqual( 1, a, double.Epsilon );
+            Assert.AreEqual( 0, b, double.Epsilon );
+
+            machine.Update( 0 );
+
+            Assert.AreEqual( 1, a, double.Epsilon );
+            Assert.AreEqual( 2, b, double.Epsilon );
         }
 
         /// <summary>
@@ -274,6 +356,19 @@ namespace FrankenBit.Utilities.Tests
 
             Assert.AreEqual( 1, state.Updated, double.Epsilon );
         }
+
+        /// <summary>
+        ///     Debug transitions of a state machine from a <paramref name="source"/>
+        ///     to a <paramref name="target"/> state.
+        /// </summary>
+        /// <param name="source">
+        ///     The source state the state machine transitions from.
+        /// </param>
+        /// <param name="target">
+        ///     The target state the state machine transitions to.
+        /// </param>
+        private static void DebugTransitions( IState source, IState target ) =>
+            Debug.Log( $"Transitioning from {source} to {target}." );
 
         /// <summary>
         ///     Test helper state that counts how often it was visited.

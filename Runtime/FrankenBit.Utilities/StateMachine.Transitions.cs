@@ -27,7 +27,7 @@ namespace FrankenBit.Utilities
 
             /// <inheritdoc />
             public override string ToString() =>
-                $"[{_transitions.Count}]";
+                $"{_transitions.Count}";
 
             /// <inheritdoc />
             public IState FindTransition( IState state )
