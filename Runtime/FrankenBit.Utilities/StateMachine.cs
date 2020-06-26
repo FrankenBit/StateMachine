@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 using JetBrains.Annotations;
 
@@ -145,7 +146,7 @@ namespace FrankenBit.Utilities
         ///     <paramref name="targetState" /> when the <paramref name="sourceState" /> indicates
         ///     that it has completed its processing.
         /// </summary>
-        /// <typeparam name="TState">
+        /// <typeparam name="TSourceState">
         ///     Type of the source state the transition originates from.
         /// </typeparam>
         /// <param name="sourceState">
@@ -163,15 +164,16 @@ namespace FrankenBit.Utilities
         ///     <paramref name="sourceState" /> or <paramref name="targetState" /> is <see langword="null" />.
         /// </exception>
         [NotNull]
-        public IStateTransition<TState> AddTransition<TState>(
-            [NotNull] TState sourceState,
-            [NotNull] IState targetState )
-            where TState : class, IState
+        public IStateTransition<TSourceState, TTargetState> AddTransition<TSourceState, TTargetState>(
+            [NotNull] TSourceState sourceState,
+            [NotNull] TTargetState targetState )
+            where TSourceState : class, IState
+            where TTargetState : class, IState
         {
             if ( sourceState == null ) throw new ArgumentNullException( nameof( sourceState ) );
             if ( targetState == null ) throw new ArgumentNullException( nameof( targetState ) );
 
-            Transition<TState> transition = Transition.Between( sourceState, targetState );
+            Transition<TSourceState, TTargetState> transition = Transition.Between( sourceState, targetState );
             GetTransitions( sourceState ).Add( transition );
             return transition;
         }

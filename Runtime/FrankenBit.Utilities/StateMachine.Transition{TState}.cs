@@ -19,11 +19,12 @@ namespace FrankenBit.Utilities
         /// <summary>
         ///     Transition between two machine states.
         /// </summary>
-        /// <typeparam name="TState">
+        /// <typeparam name="TSourceState">
         ///     Type of the source state.
         /// </typeparam>
-        private sealed class Transition<TState> : ITransition, IStateTransition<TState>
-            where TState : class, IState
+        private sealed class Transition<TSourceState, TTargetState> : ITransition, IStateTransition<TSourceState, TTargetState>
+            where TSourceState : class, IState
+            where TTargetState : class, IState
         {
             /// <summary>
             ///     Collection of transition exceptions that will target different
@@ -35,18 +36,20 @@ namespace FrankenBit.Utilities
             ///     The source state of the transition.
             /// </summary>
             [NotNull]
-            private readonly TState _sourceState;
+            private readonly TSourceState _sourceState;
 
             /// <summary>
             ///     The target state of the transition.
             /// </summary>
             [NotNull]
-            private readonly IState _targetState;
+            private readonly TTargetState _targetState;
+
+            private Action<TSourceState, TTargetState> _onTransition = (s, t) => {};
 
             /// <summary>
             ///     Condition that has to be met for the transition to be available.
             /// </summary>
-            private Func<TState, bool> _condition = s => s.Completed;
+            private Func<TSourceState, bool> _condition = s => s.Completed;
 
             /// <summary>
             ///     Initializes a new instance of the <see cref="Transition{TState}"/> class.
@@ -57,15 +60,20 @@ namespace FrankenBit.Utilities
             /// <param name="targetState">
             ///     The target state of the transition.
             /// </param>
-            internal Transition( [NotNull] TState sourceState, [NotNull] IState targetState )
+            internal Transition( [NotNull] TSourceState sourceState, [NotNull] TTargetState targetState )
             {
                 _sourceState = sourceState ?? throw new ArgumentNullException( nameof( sourceState ) );
                 _targetState = targetState ?? throw new ArgumentNullException( nameof( targetState ) );
             }
 
             /// <inheritdoc />
-            public void ButWhen( Func<TState, bool> condition, IState state ) =>
+            public void ButWhen( Func<TSourceState, bool> condition, IState state ) =>
                 _exceptions.Add( new Exception( _sourceState, condition, state ) );
+
+            public void OnTransition( Action<TSourceState, TTargetState> action )
+            {
+                _onTransition = action ?? throw new ArgumentNullException( nameof( action ) );
+            }
 
             /// <inheritdoc />
             public IState GetTargetState()
@@ -76,11 +84,15 @@ namespace FrankenBit.Utilities
                     if ( targetState != null ) return targetState;
                 }
 
-                return _condition( _sourceState ) ? _targetState : null;
+                if ( !_condition( _sourceState ) ) return null;
+
+                _onTransition.Invoke( _sourceState, _targetState );
+
+                return _targetState;
             }
 
             /// <inheritdoc />
-            public void When( Func<TState, bool> condition ) =>
+            public void When( Func<TSourceState, bool> condition ) =>
                 _condition = condition ?? throw new ArgumentNullException( nameof( condition ) );
 
             /// <summary>
@@ -92,13 +104,13 @@ namespace FrankenBit.Utilities
                 ///     Condition that has to be met for the exception to be used.
                 /// </summary>
                 [NotNull]
-                private readonly Func<TState, bool> _condition;
+                private readonly Func<TSourceState, bool> _condition;
 
                 /// <summary>
                 ///     Source state the transition exception originates from.
                 /// </summary>
                 [NotNull]
-                private readonly TState _sourceState;
+                private readonly TSourceState _sourceState;
 
                 /// <summary>
                 ///     Target state the transition exception will result in.
@@ -119,8 +131,8 @@ namespace FrankenBit.Utilities
                 ///     Target state the exception will result in.
                 /// </param>
                 internal Exception(
-                    [NotNull] TState sourceState,
-                    [NotNull] Func<TState, bool> condition,
+                    [NotNull] TSourceState sourceState,
+                    [NotNull] Func<TSourceState, bool> condition,
                     [NotNull] IState targetState )
                 {
                     _sourceState = sourceState ?? throw new ArgumentNullException( nameof( sourceState ) );
