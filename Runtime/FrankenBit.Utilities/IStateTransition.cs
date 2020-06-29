@@ -25,7 +25,7 @@ namespace FrankenBit.Utilities
         ///     Set an <paramref name="action"/> to be executing during the transition.
         /// </summary>
         /// <param name="action">
-        ///     Action to be executed during the transition.
+        ///     An action to be executed during the transition.
         /// </param>
         /// <returns>
         ///     The <see cref="IStateTransition{TSourceState,TTargetState}" /> the <paramref name="action" />
@@ -39,7 +39,7 @@ namespace FrankenBit.Utilities
         ///     Specify the <paramref name="condition"/> to be met for the transition to be available.
         /// </summary>
         /// <param name="condition">
-        ///     Condition that has to be met to make the transition available.
+        ///     A condition that has to be met to make the transition available.
         /// </param>
         /// <returns>
         ///     The <see cref="IStateTransition{TSourceState,TTargetState}" /> the <paramref name="condition" />

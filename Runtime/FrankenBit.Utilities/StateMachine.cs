@@ -17,39 +17,39 @@ namespace FrankenBit.Utilities
     public sealed partial class StateMachine : IState
     {
         /// <summary>
-        ///     Dictionary of transition lists assigned to specific states.
+        ///     A dictionary of transition lists assigned to specific states.
         /// </summary>
         [NotNull]
         private readonly Dictionary<IState, Transitions> _transitions = new Dictionary<IState, Transitions>();
 
         /// <summary>
-        ///     List of transitions that will be evaluated independent of current state.
+        ///     A list of transitions that will be evaluated independent of current state.
         /// </summary>
         [NotNull]
-        private readonly ITransitions _anyTransitions;
+        private readonly Transitions _anyTransitions;
 
         /// <summary>
-        ///     Collection of states already used in current update.
+        ///     A collection of states already used in current update.
         /// </summary>
         [NotNull]
         private readonly Stack<IState> _usedStates = new Stack<IState>();
 
         /// <summary>
-        ///     Set to <see langword="true"/> when the state machine has just processed its exit state.
+        ///     A value indicating whether the state machine has just processed its exit state.
         /// </summary>
         private bool _completed;
 
         /// <summary>
-        ///     Current state of the machine.
+        ///     The current state of the machine.
         /// </summary>
         [NotNull]
         private IState _currentState = DefaultState.Enter;
 
         /// <summary>
-        ///     List of transitions assigned to current state.
+        ///     A list of transitions assigned to current state.
         /// </summary>
-        [NotNull]
-        private ITransitions _currentTransitions;
+        [CanBeNull]
+        private Transitions _currentTransitions;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="StateMachine"/> class.
@@ -72,6 +72,11 @@ namespace FrankenBit.Utilities
         private interface ITransition
         {
             /// <summary>
+            ///     Gets a value indicating whether the transition has a custom condition assigned.
+            /// </summary>
+            bool HasCondition { get; }
+
+            /// <summary>
             ///     Try to get the target state of the transition.
             /// </summary>
             /// <returns>
@@ -80,26 +85,6 @@ namespace FrankenBit.Utilities
             /// </returns>
             [CanBeNull]
             IState GetTargetState();
-        }
-
-        /// <summary>
-        ///     Interface for a collection of zero or more transitions.
-        /// </summary>
-        private interface ITransitions
-        {
-            /// <summary>
-            ///     Try to find an available transition from the supplied <paramref name="state" />.
-            /// </summary>
-            /// <param name="state">
-            ///     The state to perform a transition from.
-            /// </param>
-            /// <returns>
-            ///     Target <seealso cref="IState" /> to which a transition from the supplied source
-            ///     <paramref name="state" /> is available or <see langword="null" /> if no
-            ///     transition is currently available.
-            /// </returns>
-            [CanBeNull]
-            IState FindTransition( [NotNull] IState state );
         }
 
         /// <inheritdoc />
@@ -186,6 +171,21 @@ namespace FrankenBit.Utilities
         }
 
         /// <summary>
+        ///     Get the default exit state when the supplied <paramref name="state" /> is completed
+        ///     but does not provide any outgoing transitions.
+        /// </summary>
+        /// <param name="state">
+        ///     Current state to be checked.
+        /// </param>
+        /// <returns>
+        ///     The instance of the <see cref="DefaultState.Exit" /> state or <see langword="null" />
+        ///     when the current state is not complete yet.
+        /// </returns>
+        [CanBeNull]
+        private static IState GetExitState( [NotNull] IState state ) =>
+            state.Completed ? DefaultState.Exit : null;
+
+        /// <summary>
         ///     Get current state of the machine.
         /// </summary>
         /// <returns>
@@ -193,8 +193,9 @@ namespace FrankenBit.Utilities
         /// </returns>
         [NotNull]
         private IState GetTargetState() =>
-            _anyTransitions.FindTransition( _currentState )
-            ?? _currentTransitions.FindTransition( _currentState )
+            _currentTransitions?.FindTransition()
+            ?? _anyTransitions.FindTransition()
+            ?? GetExitState( _currentState )
             ?? _currentState;
 
         /// <summary>
@@ -243,9 +244,7 @@ namespace FrankenBit.Utilities
             _currentState = targetState;
             _currentState.Enter();
 
-            _currentTransitions = _transitions.TryGetValue( _currentState, out Transitions currentTransitions )
-                ? currentTransitions
-                : ExitTransitions.Instance;
+            _transitions.TryGetValue( _currentState, out _currentTransitions );
 
             if ( targetState != DefaultState.Exit ) return true;
 

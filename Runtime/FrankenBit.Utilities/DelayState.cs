@@ -7,17 +7,17 @@
 namespace FrankenBit.Utilities
 {
     /// <summary>
-    ///     Delay state that expires after the specified time.
+    ///     A delay state that expires after the specified time.
     /// </summary>
     public sealed class DelayState : IState
     {
         /// <summary>
-        ///     Initial delay in seconds.
+        ///     The initial delay in seconds.
         /// </summary>
         private readonly float _delay;
 
         /// <summary>
-        ///     Current remaining delay in seconds.
+        ///     The current remaining delay in seconds.
         /// </summary>
         private float _currentDelay;
 
@@ -25,7 +25,7 @@ namespace FrankenBit.Utilities
         ///     Initializes a new instance of the <see cref="DelayState"/> class.
         /// </summary>
         /// <param name="delay">
-        ///     Delay in seconds after which the state will complete.
+        ///     A delay in seconds after which the state will complete.
         /// </param>
         public DelayState( float delay )
         {

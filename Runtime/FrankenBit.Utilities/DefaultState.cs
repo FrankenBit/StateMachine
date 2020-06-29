@@ -14,7 +14,7 @@ namespace FrankenBit.Utilities
     public sealed class DefaultState : IState
     {
         /// <summary>
-        ///     Name of the state.
+        ///     The name of the state.
         /// </summary>
         [NotNull]
         private readonly string _name;
@@ -23,7 +23,7 @@ namespace FrankenBit.Utilities
         ///     Initializes a new instance of the <see cref="DefaultState"/> class.
         /// </summary>
         /// <param name="name">
-        ///     Name of the state.
+        ///     The name of the state.
         /// </param>
         public DefaultState( [NotNull] string name )
         {

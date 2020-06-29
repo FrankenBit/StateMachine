@@ -20,13 +20,13 @@ namespace FrankenBit.Utilities
         ///     Transition between two machine states.
         /// </summary>
         /// <typeparam name="TSourceState">
-        ///     Type of the source state.
+        ///     The type of the source state.
         /// </typeparam>
         /// <typeparam name="TTargetState">
-        ///     Type of the target state.
+        ///     The type of the target state.
         /// </typeparam>
-        private sealed class Transition<TSourceState, TTargetState> : ITransition,
-                                                                      IStateTransition<TSourceState, TTargetState>
+        private sealed class Transition<TSourceState, TTargetState>
+            : ITransition, IStateTransition<TSourceState, TTargetState>
             where TSourceState : class, IState
             where TTargetState : class, IState
         {
@@ -45,10 +45,11 @@ namespace FrankenBit.Utilities
             /// <summary>
             ///     Condition that has to be met for the transition to be available.
             /// </summary>
-            private Func<TSourceState, bool> _condition = s => s.Completed;
+            [CanBeNull]
+            private Func<TSourceState, bool> _condition;
 
             /// <summary>
-            ///     Action to be executed during the transition.
+            ///     An action to be executed during the transition.
             /// </summary>
             private Action<TSourceState, TTargetState> _onTransition = ( s, t ) => { };
 
@@ -68,9 +69,13 @@ namespace FrankenBit.Utilities
             }
 
             /// <inheritdoc />
+            public bool HasCondition =>
+                _condition != null;
+
+            /// <inheritdoc />
             public IState GetTargetState()
             {
-                if ( !_condition( _sourceState ) ) return null;
+                if ( !ConditionMet() ) return null;
 
                 _onTransition( _sourceState, _targetState );
                 return _targetState;
@@ -90,6 +95,17 @@ namespace FrankenBit.Utilities
                 _condition = condition ?? throw new ArgumentNullException( nameof( condition ) );
                 return this;
             }
+
+            /// <summary>
+            ///     Check if the condition of the transition is met.
+            /// </summary>
+            /// <returns>
+            ///     <see langword="true" /> when the custom condition is met or if there is no custom condition set
+            ///     and the source state has completed,
+            ///     <see langword="false" /> otherwise.
+            /// </returns>
+            private bool ConditionMet() =>
+                _condition?.Invoke( _sourceState ) ?? _sourceState.Completed;
         }
     }
 }

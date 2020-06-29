@@ -22,10 +22,10 @@ namespace FrankenBit.Utilities
             ///     Create a transition between the <paramref name="sourceState" /> and the <paramref name="targetState" />.
             /// </summary>
             /// <typeparam name="TSourceState">
-            ///     Type of the source state.
+            ///     The type of the source state.
             /// </typeparam>
             /// <typeparam name="TTargetState">
-            ///     Type of the target state.
+            ///     The type of the target state.
             /// </typeparam>
             /// <param name="sourceState">
             ///     The source state to create the transition from.

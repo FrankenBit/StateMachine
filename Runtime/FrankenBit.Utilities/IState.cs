@@ -17,12 +17,12 @@ namespace FrankenBit.Utilities
         bool Completed { get; }
 
         /// <summary>
-        ///     Handle entrance of the state.
+        ///     Called when the state is entered.
         /// </summary>
         void Enter();
 
         /// <summary>
-        ///     Handle exit of the state.
+        ///     Called when the state is exited.
         /// </summary>
         void Exit();
 
@@ -30,7 +30,7 @@ namespace FrankenBit.Utilities
         ///     Update state while it is active.
         /// </summary>
         /// <param name="deltaTime">
-        ///     Time in seconds that has passed since the previous update call.
+        ///     The time in seconds that has passed since the previous update call.
         /// </param>
         void Update( float deltaTime );
     }

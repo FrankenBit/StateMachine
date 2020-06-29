@@ -11,7 +11,7 @@ using JetBrains.Annotations;
 namespace FrankenBit.Utilities
 {
     /// <summary>
-    ///     State for the state machine that allows to directly assign actions / delegates to be executed
+    ///     A state for the state machine that allows to directly assign actions / delegates to be executed
     ///     on certain state machine events.
     /// </summary>
     public sealed class ActionState : IState
