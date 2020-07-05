@@ -59,6 +59,36 @@ namespace FrankenBit.Utilities.Tests
         }
 
         /// <summary>
+        ///     Ensure that the source state on a transition from any state references the actual
+        ///     state the machine is transitioning from and not the <see cref="DefaultState.Any" />.
+        /// </summary>
+        [Test]
+        public void TestSourceOfTransitionFromAnyState()
+        {
+            var state1Entered = false;
+            var state2Entered = false;
+
+            var machine = new StateMachine();
+            var state1 = new ActionState { Completed = () => false, Enter = () => state1Entered = true };
+            var state2 = new ActionState { Completed = () => false, Enter = () => state2Entered = true };
+
+            machine.AddTransition( DefaultState.Enter, state1 );
+
+            machine.AddTransition( DefaultState.Any, state2 )
+               .When(
+                    s =>
+                    {
+                        Assert.AreNotEqual( DefaultState.Any, s );
+                        return state1Entered;
+                    } )
+               .OnTransition( ( s, t ) => Assert.AreNotEqual( DefaultState.Any, s ) );
+
+            machine.Update( 0 );
+
+            Assert.IsTrue( state2Entered );
+        }
+
+        /// <summary>
         ///     Ensure that the delay state actually delays state machine execution.
         /// </summary>
         [Test]

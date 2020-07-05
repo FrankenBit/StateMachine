@@ -77,14 +77,33 @@ namespace FrankenBit.Utilities
             bool HasCondition { get; }
 
             /// <summary>
-            ///     Try to get the target state of the transition.
+            ///     Gets the target state of the transition.
             /// </summary>
             /// <returns>
-            ///     Target <see cref="IState" /> of the transition if the transition is
-            ///     available or <see langword="null" /> if the transition is not available now.
+            ///     Target <see cref="IState" /> of the transition.
             /// </returns>
-            [CanBeNull]
-            IState GetTargetState();
+            [NotNull]
+            IState TargetState { get; }
+
+            /// <summary>
+            ///     Execute transition from supplied <paramref name="state" /> by calling its transition handling action,
+            ///     if one was set.
+            /// </summary>
+            /// <param name="state">
+            ///     The current state of the machine.
+            /// </param>
+            void Execute( [NotNull] IState state );
+
+            /// <summary>
+            ///     Gets a value indicating whether the transition is available from the supplied <paramref name="state" />.
+            /// </summary>
+            /// <param name="state">
+            ///     The current state of the machine.
+            /// </param>
+            /// <returns>
+            ///     <see langword="true" /> if the transition is available, <see langword="false" /> if not.
+            /// </returns>
+            bool IsAvailable( [NotNull] IState state );
         }
 
         /// <inheritdoc />
@@ -95,14 +114,15 @@ namespace FrankenBit.Utilities
         void IState.Enter()
         {
             _completed = false;
-            TransitionTo( DefaultState.Enter );
+            Execute( DefaultTransition.Enter );
         }
 
         /// <inheritdoc />
         void IState.Exit() =>
-            TransitionTo( DefaultState.Exit );
+            Execute( DefaultTransition.Exit );
 
         /// <inheritdoc />
+        [NotNull]
         public override string ToString() =>
             $"[{_currentState}] ({_currentTransitions})";
 
@@ -115,19 +135,18 @@ namespace FrankenBit.Utilities
         public void Update( float deltaTime )
         {
             _currentState.Update( deltaTime );
-            _usedStates.Push( _currentState );
-
-            IState targetState = GetTargetState();
-
-            while ( !_usedStates.Contains( targetState ) && TransitionTo( targetState ) )
-            {
-                targetState.Update( deltaTime );
-
-                _usedStates.Push( targetState );
-                targetState = GetTargetState();
-            }
 
             _usedStates.Clear();
+            _usedStates.Push( _currentState );
+
+            ITransition transition = GetNextTransition();
+
+            while ( transition != null && !_usedStates.Contains( transition.TargetState ) && Execute( transition ) )
+            {
+                _currentState.Update( deltaTime );
+                _usedStates.Push( _currentState );
+                transition = GetNextTransition();
+            }
         }
 
         /// <summary>
@@ -171,32 +190,36 @@ namespace FrankenBit.Utilities
         }
 
         /// <summary>
-        ///     Get the default exit state when the supplied <paramref name="state" /> is completed
-        ///     but does not provide any outgoing transitions.
+        ///     Get the transition to the exit state when the current state is completed
+        ///     but does not provide any available outgoing transitions or explicit
+        ///     transitions to the exit state.
         /// </summary>
-        /// <param name="state">
-        ///     Current state to be checked.
-        /// </param>
         /// <returns>
-        ///     The instance of the <see cref="DefaultState.Exit" /> state or <see langword="null" />
-        ///     when the current state is not complete yet.
+        ///     A <see cref="ITransition" /> to the <see cref="DefaultState.Exit" /> state or
+        ///     <see langword="null" /> when the current state is not complete yet.
         /// </returns>
         [CanBeNull]
-        private static IState GetExitState( [NotNull] IState state ) =>
-            state.Completed ? DefaultState.Exit : null;
+        private ITransition GetExitTransition()
+        {
+            if ( !_currentState.Completed ) return null;
+
+            return _currentTransitions?.ContainsTransitionTo( DefaultState.Exit ) != true
+                ? DefaultTransition.Exit
+                : null;
+        }
 
         /// <summary>
-        ///     Get current state of the machine.
+        ///     Get the next best currently available transition from current machine state.
         /// </summary>
         /// <returns>
-        ///     Current state of the machine.
+        ///     A <see cref="ITransition" /> that is currently available or <see langword="null" />
+        ///     if there is no transition currently available.
         /// </returns>
-        [NotNull]
-        private IState GetTargetState() =>
-            _currentTransitions?.FindTransition()
-            ?? _anyTransitions.FindTransition()
-            ?? GetExitState( _currentState )
-            ?? _currentState;
+        [CanBeNull]
+        private ITransition GetNextTransition() =>
+            _currentTransitions?.FindAvailableTransition( _currentState )
+            ?? _anyTransitions.FindAvailableTransition( _currentState )
+            ?? GetExitTransition();
 
         /// <summary>
         ///     Get collection of transitions for the supplied <paramref name="state" />.
@@ -218,10 +241,10 @@ namespace FrankenBit.Utilities
         }
 
         /// <summary>
-        ///     Transition to supplied <paramref name="targetState" />.
+        ///     Execute the supplied <paramref name="transition" />.
         /// </summary>
-        /// <param name="targetState">
-        ///     Target state to transition the state machine to.
+        /// <param name="transition">
+        ///     Transition to be executed.
         /// </param>
         /// <returns>
         ///     <see langword="true" /> if a transition to a different state was performed
@@ -233,23 +256,66 @@ namespace FrankenBit.Utilities
         ///     to prevent the state machine from looping directly over the enter state in the same
         ///     update tick to allow eventual parent state machines to move on to the next state.
         /// </remarks>
-        private bool TransitionTo( [NotNull] IState targetState )
+        private bool Execute( [NotNull] ITransition transition )
         {
+            IState targetState = transition.TargetState;
             if ( targetState == _currentState ) return false;
 
             _currentState.Exit();
 
+            transition.Execute( _currentState );
             Transitioning?.Invoke( _currentState, targetState );
 
             _currentState = targetState;
-            _currentState.Enter();
-
             _transitions.TryGetValue( _currentState, out _currentTransitions );
 
-            if ( targetState != DefaultState.Exit ) return true;
+            _currentState.Enter();
 
-            _completed = true;
-            return false;
+            _completed = targetState == DefaultState.Exit;
+            return !_completed;
+        }
+
+        /// <summary>
+        ///     A transition to a default state.
+        /// </summary>
+        private sealed class DefaultTransition : ITransition
+        {
+            /// <summary>
+            ///     Initializes a new instance of the <see cref="DefaultTransition"/> class.
+            /// </summary>
+            /// <param name="state">
+            ///     The target state of the default transition.
+            /// </param>
+            private DefaultTransition( [NotNull] IState state )
+            {
+                TargetState = state;
+            }
+
+            /// <inheritdoc />
+            public bool HasCondition =>
+                false;
+
+            /// <inheritdoc />
+            public IState TargetState { get; }
+
+            /// <summary>
+            ///     Gets the instance of the enter state transition.
+            /// </summary>
+            internal static ITransition Enter { get; } = new DefaultTransition( DefaultState.Enter );
+
+            /// <summary>
+            ///     Gets the instance of the exit state transition.
+            /// </summary>
+            internal static ITransition Exit { get; } = new DefaultTransition( DefaultState.Exit );
+
+            /// <inheritdoc />
+            public void Execute( IState state )
+            {
+            }
+
+            /// <inheritdoc />
+            public bool IsAvailable( IState state ) =>
+                true;
         }
     }
 }

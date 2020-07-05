@@ -43,7 +43,7 @@ namespace FrankenBit.Utilities
             private readonly TTargetState _targetState;
 
             /// <summary>
-            ///     Condition that has to be met for the transition to be available.
+            ///     A condition that has to be met for the transition to be available.
             /// </summary>
             [CanBeNull]
             private Func<TSourceState, bool> _condition;
@@ -73,12 +73,28 @@ namespace FrankenBit.Utilities
                 _condition != null;
 
             /// <inheritdoc />
-            public IState GetTargetState()
-            {
-                if ( !ConditionMet() ) return null;
+            public IState TargetState =>
+                _targetState;
 
-                _onTransition( _sourceState, _targetState );
-                return _targetState;
+            /// <inheritdoc />
+            /// <exception cref="Exception">
+            ///     A delegate callback throws an exception.
+            /// </exception>
+            public void Execute( IState state )
+            {
+                TSourceState sourceState = ResolveSourceState( state );
+
+                _onTransition?.Invoke( sourceState, _targetState );
+            }
+
+            /// <inheritdoc />
+            /// <exception cref="Exception">
+            ///     A delegate callback throws an exception.
+            /// </exception>
+            public bool IsAvailable( IState state )
+            {
+                TSourceState sourceState = ResolveSourceState( state );
+                return _condition?.Invoke( sourceState ) ?? sourceState.Completed;
             }
 
             /// <inheritdoc />
@@ -97,15 +113,18 @@ namespace FrankenBit.Utilities
             }
 
             /// <summary>
-            ///     Check if the condition of the transition is met.
+            ///     Resolve actual source state using the supplied <paramref name="state" />.
             /// </summary>
+            /// <param name="state">
+            ///     The current machine state reported by the state machine.
+            /// </param>
             /// <returns>
-            ///     <see langword="true" /> when the custom condition is met or if there is no custom condition set
-            ///     and the source state has completed,
-            ///     <see langword="false" /> otherwise.
+            ///     The state that should be used for transition callbacks or
+            ///     <see langword="null" /> if the machine state does not match the transition source state.
             /// </returns>
-            private bool ConditionMet() =>
-                _condition?.Invoke( _sourceState ) ?? _sourceState.Completed;
+            [NotNull]
+            private TSourceState ResolveSourceState( [NotNull] IState state ) =>
+                _sourceState == DefaultState.Any ? (TSourceState)state : _sourceState;
         }
     }
 }
