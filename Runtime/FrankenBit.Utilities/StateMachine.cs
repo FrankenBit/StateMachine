@@ -133,7 +133,9 @@ namespace FrankenBit.Utilities
         ///     Time in seconds that has passed since the previous update call.
         /// </param>
         public void Update( float deltaTime )
-        {
+        { 
+            if (_currentState != DefaultState.Exit)
+            {
             _currentState.Update( deltaTime );
 
             _usedStates.Clear();
@@ -146,6 +148,7 @@ namespace FrankenBit.Utilities
                 _currentState.Update( deltaTime );
                 _usedStates.Push( _currentState );
                 transition = GetNextTransition();
+            }
             }
         }
 
